@@ -44,7 +44,8 @@ Both actions are also in the workspace right-click menu:
    to start in the new workspace, by number. Default menu: `[1] claude [2] codex [3] shell`
    (`claude --dangerously-skip-permissions --name <label>`, `codex --yolo`, plain shell); the
    `[run]` table in the config replaces it entirely, arguments included (Enter = first entry).
-   A workspace that is not a git checkout gets a toast instead of the popup.
+   A workspace that is not a git checkout gets a toast instead of the popup. Only a chosen
+   command gets the removal offer below; the plain shell entry leaves you in the worktree.
 2. The popup closes at once; the work continues in an unfocused split *creating worktree…*
    below the pane you were in (a tab when none is known), so every step and the hook output
    stay visible while you keep working. The split closes itself when done.
@@ -56,7 +57,12 @@ Both actions are also in the workspace right-click menu:
    Linear/Jira key or the GitHub issue number). A taken name gets `-2`, `-3`, …
 6. `wt switch --create … --no-cd` (hooks run here) or `herdr worktree create`, then
    `herdr worktree open --focus`, the chosen command typed into the workspace's shell once it
-   is ready, and a toast with the branch name. On failure the tab stays
+   is ready, and a toast with the branch name.
+7. When that command exits, a clean worktree is offered for removal (`remove worktree …, keep
+   branch …? [Y/n]`): `wt remove --no-delete-branch` (or `git worktree remove`), then the
+   workspace closes. Uncommitted or untracked files keep it without asking; the branch always
+   survives, so `wt switch <branch>` brings the checkout back. Set `offer_remove = false` to
+   skip the question. On failure the tab stays
    open with the error until a key is pressed; details are in `last.log` under the plugin's
    state directory.
 
@@ -71,6 +77,9 @@ Both actions are also in the workspace right-click menu:
 
     # branch prefix (default: "<user>/"); set "" for none
     branch_prefix = "feat/"
+
+    # ask to remove a clean worktree once the started command exits (default: true)
+    offer_remove = true
 
     # the popup's "Run in it" menu, in order; the first entry is the Enter default.
     # {{branch}}, {{label}} (branch without prefix) and {{path}} expand. Keep the keys above

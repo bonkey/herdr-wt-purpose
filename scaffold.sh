@@ -11,6 +11,8 @@
 # Config ($HERDR_PLUGIN_CONFIG_DIR/config.toml, both optional):
 #          slug_command  = "swift $HERDR_PLUGIN_ROOT/slug.swift"  # prompt on stdin, slug on stdout
 #          branch_prefix = "<user>/"                               # set "" for no prefix
+#          offer_remove = true                                      # after the command exits, offer to
+#                                                                   # remove a clean worktree (cleanup.sh)
 #          [run]                                                    # the popup's menu, in order
 #          claude = "claude --dangerously-skip-permissions --name {{label}}"
 #          shell = ""
@@ -153,6 +155,11 @@ run_in_workspace() {
   [ -n "$run" ] || return 0
   cmd=$run
   cmd=${cmd//\{\{branch\}\}/$branch}; cmd=${cmd//\{\{label\}\}/$label}; cmd=${cmd//\{\{path\}\}/$wtpath}
+  # When the command ends, cleanup.sh offers to remove the (clean) worktree, keeping the branch.
+  case $(config_value offer_remove) in
+    false|no|0) ;;
+    *) printf -v q '%q' "$plugin_root/cleanup.sh"; cmd="$cmd; bash $q" ;;
+  esac
   pane=$target_pane
   [ -n "$pane" ] || [ -z "$target_ws" ] || pane=$("$herdr" pane list --workspace "$target_ws" 2>>"$log" | jq -r '.result.panes[0].pane_id // empty')
   [ -n "$pane" ] || { say "no pane found to run: $cmd"; return 0; }
