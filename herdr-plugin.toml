@@ -1,0 +1,41 @@
+id = "bonkey.wt-purpose"
+name = "Worktree from purpose"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "Type a purpose or a ticket URL; an on-device model names the branch and the worktree is created and opened in the background."
+platforms = ["macos", "linux"]
+
+# Bind in config.toml:
+#   [[keys.command]]
+#   key = "prefix+shift+n"
+#   type = "plugin_action"
+#   command = "bonkey.wt-purpose.create"
+[[actions]]
+id = "create"
+title = "Worktree from purpose (default branch)"
+description = "Prompt for a purpose or ticket URL; name, create and open the worktree in the background."
+contexts = ["workspace"]
+command = ["bash", "open.sh", "default"]
+
+[[actions]]
+id = "create-current"
+title = "Worktree from purpose (current branch)"
+description = "Same, branching off the branch checked out in this workspace."
+contexts = ["workspace"]
+command = ["bash", "open.sh", "current"]
+
+# Panes get the repo as cwd, so their scripts are addressed through the plugin root.
+[[panes]]
+id = "prompt"
+title = "New worktree"
+placement = "popup"
+width = "70%"
+height = 6
+command = ["bash", "-c", "exec bash \"$HERDR_PLUGIN_ROOT/prompt.sh\""]
+
+# prompt.sh opens this as a split below the invoking pane, or a tab when no pane is known.
+[[panes]]
+id = "scaffold"
+title = "creating worktree…"
+placement = "split"
+command = ["bash", "-c", "exec bash \"$HERDR_PLUGIN_ROOT/scaffold.sh\""]
