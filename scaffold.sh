@@ -6,6 +6,8 @@
 #
 # Env in:  WTP_INPUT  purpose text, or exactly one URL (Linear / Jira / GitHub / any page)
 #          WTP_BASE   default | current   (base branch for the new one)
+#          WTP_PLACEMENT  tab when this pane has a tab of its own (prompt.sh's fallback); a split
+#                     shares the invoking pane's tab, which must keep its label
 #          WTP_RUN    command line to start in the new workspace ("" = just the shell);
 #                     {{branch}} {{label}} {{path}} expand
 # Config ($HERDR_PLUGIN_CONFIG_DIR/config.toml, both optional):
@@ -175,8 +177,12 @@ run_in_workspace() {
 }
 
 # --- main -------------------------------------------------------------------------------------
+# The pane is ours and closes with the script, so its title can say what is going on. The tab is
+# ours only in the tab fallback: as a split this pane shares the tab with the pane the action came
+# from, and a tab label outlives the pane — renaming it there stamps "creating worktree…" on the
+# user's own tab for good.
 [ -n "${HERDR_PANE_ID:-}" ] && "$herdr" pane rename "$HERDR_PANE_ID" "creating worktree…" >/dev/null 2>&1
-[ -n "${HERDR_TAB_ID:-}" ] && "$herdr" tab rename "$HERDR_TAB_ID" "creating worktree…" >/dev/null 2>&1
+[ "${WTP_PLACEMENT:-}" = tab ] && [ -n "${HERDR_TAB_ID:-}" ] && "$herdr" tab rename "$HERDR_TAB_ID" "creating worktree…" >/dev/null 2>&1
 [ -n "$input" ] || fail "empty input"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "$PWD is not inside a git work tree"
 

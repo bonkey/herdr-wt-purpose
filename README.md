@@ -46,9 +46,10 @@ Both actions are also in the workspace right-click menu:
    `[run]` table in the config replaces it entirely, arguments included (Enter = first entry).
    A workspace that is not a git checkout gets a toast instead of the popup. Only a chosen
    command gets the removal offer below; the plain shell entry leaves you in the worktree.
-2. The popup closes at once; the work continues in an unfocused split *creating worktree…*
-   below the pane you were in (a tab when none is known), so every step and the hook output
-   stay visible while you keep working. The split closes itself when done.
+2. The popup closes at once; the work continues in an unfocused split titled *creating
+   worktree…* below the pane you were in (a tab of that name when none is known), so every
+   step and the hook output stay visible while you keep working. The split closes itself when
+   done; your own tab keeps its label.
 3. If the line is a single URL it is resolved (Linear, GitHub, Jira, or any page's `<title>`);
    anything else is the purpose text.
 4. The slug backend gets one prompt on stdin and answers one line; the reply is sanitized to

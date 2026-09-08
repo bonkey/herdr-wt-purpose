@@ -56,5 +56,5 @@ out=""
 if [ -n "${WTP_TARGET_PANE:-}" ]; then
   out=$(open_scaffold --placement split --direction down --target-pane "$WTP_TARGET_PANE") && exit 0
 fi
-out=$(open_scaffold --placement tab --workspace "$HERDR_WORKSPACE_ID") && exit 0
+out=$(open_scaffold --placement tab --workspace "$HERDR_WORKSPACE_ID" --env WTP_PLACEMENT=tab) && exit 0
 printf '\033[31mcould not start the scaffold pane: %s\033[0m\n' "$out"; sleep 3; exit 1
