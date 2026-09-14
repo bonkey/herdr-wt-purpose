@@ -4,7 +4,9 @@
 # its hooks when installed, herdr natively otherwise), opens it as a herdr worktree workspace,
 # then toasts. The pane closes with the script; on failure it stays open until a key is pressed.
 #
-# Env in:  WTP_INPUT  purpose text, or exactly one URL (Linear / Jira / GitHub / any page)
+# Env in:  WTP_INPUT  purpose text, or exactly one URL (Linear / Jira / GitHub / any page).
+#                     A GitHub pull request URL checks that PR's own branch out instead, so the
+#                     forge matches the worktree to the PR; WTP_BASE then plays no part.
 #          WTP_BASE   default | current   (base branch for the new one)
 #          WTP_PLACEMENT  tab when this pane has a tab of its own (prompt.sh's fallback); a split
 #                     shares the invoking pane's tab, which must keep its label
@@ -53,7 +55,9 @@ sanitize() {
 
 # resolve_url URL — fills ticket_id / ticket_title / ticket_body for the ticket systems we know;
 # any other page contributes its <title>. Missing tools or credentials degrade to id-only.
-ticket_id=""; ticket_title=""; ticket_body=""
+# A GitHub pull request URL also fills pr_url and pr_branch, which check that PR's branch out
+# rather than name a new one.
+ticket_id=""; ticket_title=""; ticket_body=""; pr_url=""; pr_branch=""
 resolve_url() {
   local url host path json
   url=$(printf '%s' "$1" | sed -E "s/[.,;:)\"']+$//")
@@ -75,14 +79,16 @@ resolve_url() {
       fi ;;
     *://github.com/*/*/issues/*|*://github.com/*/*/pull/*)
       ticket_id=$(printf '%s' "$url" | sed -E 's#.*/(issues|pull)/([0-9]+).*#\2#')
+      case $url in */pull/*) pr_url=$url ;; esac
       if command -v gh >/dev/null; then
         case $url in
-          */pull/*) json=$(gh pr view "$url" --json title,body 2>>"$log") || json="" ;;
+          */pull/*) json=$(gh pr view "$url" --json title,body,headRefName 2>>"$log") || json="" ;;
           *)        json=$(gh issue view "$url" --json title,body 2>>"$log") || json="" ;;
         esac
         if [ -n "$json" ]; then
           ticket_title=$(jq -r '.title // empty' <<<"$json")
           ticket_body=$(jq -r '.body // empty' <<<"$json")
+          pr_branch=$(jq -r '.headRefName // empty' <<<"$json")
         fi
       fi ;;
     */browse/[A-Za-z]*-[0-9]*)
@@ -194,37 +200,76 @@ case $input in
     [ -n "$ticket_id" ] && say "ticket: ${ticket_id}${ticket_title:+ — $ticket_title}" ;;
 esac
 
-say "asking the model for a name…"
-slug=$(make_slug)
-[ -n "$slug" ] || fail "could not derive a slug from: $input"
-
 if grep -qE '^[[:space:]]*branch_prefix[[:space:]]*=' "$config_file" 2>/dev/null; then
   prefix=$(config_value branch_prefix)
 else
   prefix="$(id -un)/"
 fi
-branch="${prefix}${ticket_id:+${ticket_id}-}${slug}"
-taken() { git show-ref --verify --quiet "refs/heads/$1" || git show-ref --verify --quiet "refs/remotes/origin/$1"; }
-if taken "$branch"; then
-  n=2; while taken "$branch-$n"; do n=$((n + 1)); done; branch="$branch-$n"
+
+if [ -n "$pr_url" ]; then
+  # The pull request brings its own branch. Any other name would leave the PR unmatched, so the
+  # model is not asked and the prefix only shortens the label. wt reports the branch it checked
+  # out below; without wt, gh has to have named it.
+  branch=$pr_branch
+else
+  say "asking the model for a name…"
+  slug=$(make_slug)
+  [ -n "$slug" ] || fail "could not derive a slug from: $input"
+  branch="${prefix}${ticket_id:+${ticket_id}-}${slug}"
+  taken() { git show-ref --verify --quiet "refs/heads/$1" || git show-ref --verify --quiet "refs/remotes/origin/$1"; }
+  if taken "$branch"; then
+    n=2; while taken "$branch-$n"; do n=$((n + 1)); done; branch="$branch-$n"
+  fi
 fi
 label=${branch#"$prefix"}
-printf '\033[1m%s\033[0m\n' "$branch"
+[ -n "$branch" ] && printf '\033[1m%s\033[0m\n' "$branch"
 
 target_pane=""; target_ws=""; wtpath=""; ran=""
 base_ref=""; [ "$base_mode" = current ] && base_ref="@"
 if command -v wt >/dev/null; then
-  say "wt switch --create $branch${base_ref:+ --base $base_ref}"
-  set -- switch --create "$branch" --no-cd --format=json
-  [ -n "$base_ref" ] && set -- "$@" --base "$base_ref"
-  result=$(wt -C "$PWD" "$@") || fail "wt switch failed for $branch (see above)"
+  if [ -n "$pr_url" ]; then
+    # wt takes the PR URL itself: it resolves the head branch, a fork's included, and reports
+    # the branch it checked out — the base branch plays no part.
+    say "wt switch $pr_url"
+    result=$(wt -C "$PWD" switch "$pr_url" --no-cd --format=json) || fail "wt switch failed for $pr_url (see above)"
+    branch=$(printf '%s\n' "$result" | jq -r '.branch // empty' 2>/dev/null)
+    [ -n "$branch" ] || fail "wt checked the PR out but named no branch"
+    # wt has the final word on the name: a fork's head can land on a prefixed local branch.
+    if [ "$branch" != "$pr_branch" ]; then
+      label=${branch#"$prefix"}
+      printf '\033[1m%s\033[0m\n' "$branch"
+    fi
+  else
+    say "wt switch --create $branch${base_ref:+ --base $base_ref}"
+    set -- switch --create "$branch" --no-cd --format=json
+    [ -n "$base_ref" ] && set -- "$@" --base "$base_ref"
+    result=$(wt -C "$PWD" "$@") || fail "wt switch failed for $branch (see above)"
+  fi
   wtpath=$(printf '%s\n' "$result" | jq -r '.path // empty' 2>/dev/null)
   [ -n "$wtpath" ] || wtpath=$(git worktree list --porcelain | awk -v b="refs/heads/$branch" '$1=="worktree"{p=$2} $1=="branch"&&$2==b{print p; exit}')
   [ -n "$wtpath" ] || fail "wt returned no worktree path for $branch"
   open_workspace
 else
   # No worktrunk: herdr creates the checkout under [worktrees].directory and opens it in one call.
-  if [ -n "$base_ref" ]; then
+  # It checks an existing local branch out, so a PR needs its head as a local branch first. Every
+  # GitHub PR head sits under refs/pull/N/head of the repository the PR targets, forks included,
+  # so one fetch covers both.
+  if [ -n "$pr_url" ]; then
+    [ -n "$branch" ] || fail "reading the PR's branch needs gh (or worktrunk) — neither is on PATH"
+    # The fetch goes to origin, so a PR of another repository would bring the wrong head.
+    pr_repo=$(printf '%s' "$pr_url" | sed -E 's#.*://[^/]+/([^/]+/[^/]+)/pull/.*#\1#')
+    case $(git remote get-url origin 2>/dev/null) in
+      *"$pr_repo"*) ;;
+      *) fail "$pr_repo is not the origin of $PWD" ;;
+    esac
+    if ! git show-ref --verify --quiet "refs/heads/$branch"; then
+      say "git fetch origin refs/pull/$ticket_id/head:$branch"
+      git fetch origin "refs/pull/$ticket_id/head:$branch" 2>&1 | tee -a "$log"
+      git show-ref --verify --quiet "refs/heads/$branch" \
+        || fail "could not fetch refs/pull/$ticket_id/head into $branch"
+    fi
+    base_ref=""
+  elif [ -n "$base_ref" ]; then
     base_ref=$(git rev-parse --abbrev-ref HEAD)
   else
     base_ref=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null); base_ref=${base_ref#origin/}

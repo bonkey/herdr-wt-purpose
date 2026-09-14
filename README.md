@@ -7,6 +7,9 @@ nested worktree workspace — all in the background while you keep working.
     prefix+shift+n → "Purpose or ticket URL: fix crash when opening settings on iPad"
                   → bonkey/landscape-settings-crash-fix   (toast when the workspace is ready)
 
+A GitHub pull request URL is the exception: its own branch is checked out, so the PR matches the
+new worktree.
+
 ## Install
 
     herdr plugin install bonkey/herdr-wt-purpose
@@ -19,7 +22,8 @@ Everything else is optional and detected at run time:
   the text itself.
 - **[worktrunk](https://github.com/max-sixty/worktrunk)** (`wt`) — used when on PATH so your
   worktrunk hooks (`post-start`, copy-ignored, …) run; otherwise `herdr worktree create`.
-- **`gh`** — titles and bodies of GitHub issues / PRs.
+- **`gh`** — titles and bodies of GitHub issues / PRs, and the head branch of a pull request URL
+  when worktrunk is absent.
 - **`LINEAR_API_KEY`** — Linear issue title and description (the URL alone still gives the
   key and the title slug).
 - **`JIRA_USER` + `JIRA_API_TOKEN`** — Jira summary and description for `…/browse/KEY-123` URLs
@@ -52,14 +56,19 @@ Both actions are also in the workspace right-click menu:
    done; your own tab keeps its label.
 3. If the line is a single URL it is resolved (Linear, GitHub, Jira, or any page's `<title>`);
    anything else is the purpose text.
-4. The slug backend gets one prompt on stdin and answers one line; the reply is sanitized to
+4. A GitHub pull request URL checks that PR's branch out instead of naming a new one: the model
+   is not asked and the base branch plays no part. With worktrunk, `wt switch <url>` resolves the
+   head, a fork's included, and reports the branch it landed on; without it, `git fetch origin
+   refs/pull/<N>/head` brings the head in as a local branch first (the ref covers forks too).
+   With worktrunk, a branch that already has a worktree is opened as it is.
+5. The slug backend gets one prompt on stdin and answers one line; the reply is sanitized to
    `[a-z0-9-]`, at most 40 characters.
-5. Branch = `<prefix><TICKET-ID>-<slug>` (prefix defaults to `<your user>/`; the ticket id is the
+6. Branch = `<prefix><TICKET-ID>-<slug>` (prefix defaults to `<your user>/`; the ticket id is the
    Linear/Jira key or the GitHub issue number). A taken name gets `-2`, `-3`, …
-6. `wt switch --create … --no-cd` (hooks run here) or `herdr worktree create`, then
+7. `wt switch --create … --no-cd` (hooks run here) or `herdr worktree create`, then
    `herdr worktree open --focus`, the chosen command typed into the workspace's shell once it
    is ready, and a toast with the branch name.
-7. When that command exits, a clean worktree is offered for removal (`remove worktree …, keep
+8. When that command exits, a clean worktree is offered for removal (`remove worktree …, keep
    branch …? [Y/n]`): `wt remove --no-delete-branch` (or `git worktree remove`), then the
    workspace closes. Uncommitted or untracked files keep it without asking; the branch always
    survives, so `wt switch <branch>` brings the checkout back. Set `offer_remove = false` to
