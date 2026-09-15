@@ -70,11 +70,11 @@ Both actions are also in the workspace right-click menu:
    is ready, and a toast with the branch name.
 8. When that command exits, a clean worktree is offered for removal (`remove worktree …, keep
    branch …? [Y/n]`): `wt remove --no-delete-branch` (or `git worktree remove`), then the
-   workspace closes. Uncommitted or untracked files keep it without asking; the branch always
-   survives, so `wt switch <branch>` brings the checkout back. Set `offer_remove = false` to
-   skip the question. On failure the tab stays
-   open with the error until a key is pressed; details are in `last.log` under the plugin's
-   state directory.
+   tab closes — other tabs of the workspace stay, and the workspace goes with its last tab.
+   Uncommitted or untracked files keep it without asking; the branch always survives, so
+   `wt switch <branch>` brings the checkout back. Set `offer_remove = false` to skip the
+   question. On failure the tab stays open with the error until a key is pressed; details are
+   in `last.log` under the plugin's state directory.
 
 ## Configuration
 

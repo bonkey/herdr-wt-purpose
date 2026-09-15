@@ -5,7 +5,8 @@
 # Same bar as wt itself: uncommitted or untracked files keep the worktree without asking.
 # Gitignored files (node_modules, .env, build output) are counted, not blocking — reclaiming
 # them is usually the point. Removal goes through `wt remove` (hooks run) when wt is on PATH,
-# else `git worktree remove`; then the herdr workspace that showed the checkout is closed.
+# else `git worktree remove`; then the herdr tab this shell runs in is closed. Other tabs of
+# the workspace stay; when this was the only tab, herdr closes the workspace with it.
 set -u
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 herdr=${HERDR_BIN_PATH:-herdr}
@@ -33,6 +34,7 @@ if command -v wt >/dev/null; then
 else
   git worktree remove "$wt_path" || exit 1
 fi
-# The workspace now shows a deleted checkout; closing it ends this shell too.
-[ -n "${HERDR_WORKSPACE_ID:-}" ] && "$herdr" workspace close "$HERDR_WORKSPACE_ID" >/dev/null 2>&1
+# This tab now shows a deleted checkout; closing it ends this shell too. Only this tab goes —
+# the user may keep other tabs open in the workspace.
+[ -n "${HERDR_TAB_ID:-}" ] && "$herdr" tab close "$HERDR_TAB_ID" >/dev/null 2>&1
 exit 0
