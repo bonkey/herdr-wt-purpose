@@ -44,8 +44,8 @@ Both actions are also in the workspace right-click menu:
 
 ## Behavior
 
-1. A small popup asks for one line. Enter on an empty line cancels. A second line asks what
-   to start in the new workspace, by number. Default menu: `[1] claude [2] codex [3] shell`
+1. A small popup asks for one line. Esc, or Enter on an empty line, cancels. A second line asks
+   what to start in the new workspace, by number (Esc cancels there too). Default menu: `[1] claude [2] codex [3] shell`
    (`claude --dangerously-skip-permissions --name <label>`, `codex --yolo`, plain shell); the
    `[run]` table in the config replaces it entirely, arguments included (Enter = first entry).
    A workspace that is not a git checkout gets a toast instead of the popup. Only a chosen

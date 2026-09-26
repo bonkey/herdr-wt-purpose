@@ -14,8 +14,11 @@ case $base in
   *)       hint="from the default branch" ;;
 esac
 printf '\033[1mNew worktree\033[0m %s\n' "$hint"
-printf 'Purpose or ticket URL (Linear / Jira / GitHub): '
-IFS= read -e -r input || exit 0
+# Esc clears the line and submits it, so the empty-input exit below closes the popup. Esc Esc is
+# bound too, or it runs filename completion. bind warns on stderr outside an interactive shell.
+bind '"\e": "\C-a\C-k\C-j"' '"\e\e": "\C-a\C-k\C-j"' 2>/dev/null
+# The prompt goes through -p: readline redraws the edit line from where its own prompt ends.
+IFS= read -e -r -p 'Purpose or ticket URL (Linear / Jira / GitHub): ' input || exit 0
 [ -n "${input// /}" ] || exit 0
 
 # [run] table → "name<TAB>command" lines in file order; the first entry is the Enter default.
@@ -41,6 +44,7 @@ menu=""; i=1
 for n in "${names[@]}"; do menu="$menu  [$i] $n"; i=$((i + 1)); done
 printf 'Run in it:%s   (Enter = %s): ' "$menu" "${names[0]}"
 IFS= read -r -n1 key; printf '\n'
+[ "$key" = $'\e' ] && exit 0
 idx=0
 case $key in [1-9]) [ "$key" -le ${#names[@]} ] && idx=$((key - 1)) ;; esac
 run=${cmds[$idx]}
