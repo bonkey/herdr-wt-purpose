@@ -15,8 +15,9 @@ case $base in
 esac
 printf '\033[1mNew worktree\033[0m %s\n' "$hint"
 # Esc clears the line and submits it, so the empty-input exit below closes the popup. Esc Esc is
-# bound too, or it runs filename completion. bind warns on stderr outside an interactive shell.
-bind '"\e": "\C-a\C-k\C-j"' '"\e\e": "\C-a\C-k\C-j"' 2>/dev/null
+# bound too, or it runs filename completion. After an Esc, readline waits keyseq-timeout ms for
+# the rest of an arrow key's sequence. bind warns on stderr outside an interactive shell.
+bind 'set keyseq-timeout 20' '"\e": "\C-a\C-k\C-j"' '"\e\e": "\C-a\C-k\C-j"' 2>/dev/null
 # The prompt goes through -p: readline redraws the edit line from where its own prompt ends.
 IFS= read -e -r -p 'Purpose or ticket URL (Linear / Jira / GitHub): ' input || exit 0
 [ -n "${input// /}" ] || exit 0
