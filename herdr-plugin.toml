@@ -1,6 +1,6 @@
 id = "bonkey.wt-purpose"
 name = "Worktree from purpose"
-version = "0.1.0"
+version = "0.2.0"
 min_herdr_version = "0.8.0"
 description = "Type a purpose or a ticket URL; an on-device model names the branch and the worktree is created and opened in the background."
 platforms = ["macos", "linux"]
