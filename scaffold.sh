@@ -20,7 +20,8 @@
 #          [run]                                                    # the popup's menu, in order
 #          claude = "claude --dangerously-skip-permissions --name {{label}}"
 #          shell = ""
-# Optional credentials for ticket bodies: LINEAR_API_KEY, JIRA_USER + JIRA_API_TOKEN, gh auth.
+# Credentials for ticket titles and bodies: LINEAR_API_KEY, JIRA_USER + JIRA_API_TOKEN, gh auth.
+# A URL whose title cannot be read stops the run.
 set -u
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 herdr=${HERDR_BIN_PATH:-herdr}
@@ -54,10 +55,11 @@ sanitize() {
 }
 
 # resolve_url URL — fills ticket_id / ticket_title / ticket_body for the ticket systems we know;
-# any other page contributes its <title>. Missing tools or credentials degrade to id-only.
+# any other page contributes its <title>. A missing tool or credential leaves the title empty
+# and puts the reason in no_title.
 # A GitHub pull request URL also fills pr_url and pr_branch, which check that PR's branch out
 # rather than name a new one.
-ticket_id=""; ticket_title=""; ticket_body=""; pr_url=""; pr_branch=""
+ticket_id=""; ticket_title=""; ticket_body=""; pr_url=""; pr_branch=""; no_title=""
 resolve_url() {
   local url host path json
   url=$(printf '%s' "$1" | sed -E "s/[.,;:)\"']+$//")
@@ -76,6 +78,8 @@ resolve_url() {
           ticket_title=$(jq -r '.data.issue.title // empty' <<<"$json")
           ticket_body=$(jq -r '.data.issue.description // empty' <<<"$json")
         fi
+      else
+        no_title="LINEAR_API_KEY is not set in herdr's environment"
       fi ;;
     *://github.com/*/*/issues/*|*://github.com/*/*/pull/*)
       ticket_id=$(printf '%s' "$url" | sed -E 's#.*/(issues|pull)/([0-9]+).*#\2#')
@@ -90,6 +94,8 @@ resolve_url() {
           ticket_body=$(jq -r '.body // empty' <<<"$json")
           pr_branch=$(jq -r '.headRefName // empty' <<<"$json")
         fi
+      else
+        no_title="gh is not on PATH"
       fi ;;
     */browse/[A-Za-z]*-[0-9]*)
       ticket_id=$(printf '%s' "$url" | sed -E 's#.*/browse/([A-Za-z][A-Za-z0-9]*-[0-9]+).*#\1#' | tr '[:lower:]' '[:upper:]')
@@ -100,6 +106,8 @@ resolve_url() {
           ticket_title=$(jq -r '.fields.summary // empty' <<<"$json")
           ticket_body=$(jq -r '[.fields.description | .. | .text? // empty] | join(" ")' <<<"$json")
         fi
+      else
+        no_title="JIRA_USER and JIRA_API_TOKEN are not set in herdr's environment"
       fi ;;
     *)
       ticket_title=$(curl -fsSL --max-time 10 "$url" 2>>"$log" | grep -oE '<title[^>]*>[^<]+' | head -1 | sed 's/^[^>]*>//') ;;
@@ -197,7 +205,11 @@ case $input in
     case $input in *[[:space:]]*) fail "one URL only, or plain text" ;; esac
     say "resolving $input"
     resolve_url "$input"
-    [ -n "$ticket_id" ] && say "ticket: ${ticket_id}${ticket_title:+ — $ticket_title}" ;;
+    [ -n "$ticket_id" ] && say "ticket: ${ticket_id}${ticket_title:+ — $ticket_title}"
+    # A bare URL gives the model nothing to name, and it invents a slug. A pull request brings
+    # its own branch and needs no title.
+    [ -n "$ticket_title" ] || [ -n "$pr_url" ] \
+      || fail "no title for $input: ${no_title:-the lookup returned nothing}. Type a purpose instead." ;;
 esac
 
 if grep -qE '^[[:space:]]*branch_prefix[[:space:]]*=' "$config_file" 2>/dev/null; then

@@ -24,10 +24,12 @@ Everything else is optional and detected at run time:
   worktrunk hooks (`post-start`, copy-ignored, …) run; otherwise `herdr worktree create`.
 - **`gh`** — titles and bodies of GitHub issues / PRs, and the head branch of a pull request URL
   when worktrunk is absent.
-- **`LINEAR_API_KEY`** — Linear issue title and description (the URL alone still gives the
-  key and the title slug).
-- **`JIRA_USER` + `JIRA_API_TOKEN`** — Jira summary and description for `…/browse/KEY-123` URLs
-  (the URL alone still gives the key).
+- **`LINEAR_API_KEY`** — Linear issue title and description (a URL that ends in the title slug
+  works without it).
+- **`JIRA_USER` + `JIRA_API_TOKEN`** — Jira summary and description for `…/browse/KEY-123` URLs.
+
+A URL whose title cannot be read stops the run (Behavior, step 3). The variables must be in the
+environment of the herdr server: a server started before they were set does not see them.
 
 ## Keybinding
 
@@ -55,7 +57,9 @@ Both actions are also in the workspace right-click menu:
    step and the hook output stay visible while you keep working. The split closes itself when
    done; your own tab keeps its label.
 3. If the line is a single URL it is resolved (Linear, GitHub, Jira, or any page's `<title>`);
-   anything else is the purpose text.
+   anything else is the purpose text. A URL that gives no title stops the run before anything is
+   created, and the error names the missing tool or credential: from a bare URL the model can
+   only invent a name. A pull request URL needs no title (step 4).
 4. A GitHub pull request URL checks that PR's branch out instead of naming a new one: the model
    is not asked and the base branch plays no part. With worktrunk, `wt switch <url>` resolves the
    head, a fork's included, and reports the branch it landed on; without it, `git fetch origin
