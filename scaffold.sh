@@ -18,7 +18,7 @@
 #          offer_remove = true                                      # after the command exits, offer to
 #                                                                   # remove a clean worktree (cleanup.sh)
 #          [run]                                                    # the popup's menu, in order
-#          claude = "claude --dangerously-skip-permissions --name {{label}}"
+#          claude = "claude --allow-dangerously-skip-permissions --permission-mode plan --name {{label}}"
 #          shell = ""
 # Credentials for ticket titles and bodies: LINEAR_API_KEY, JIRA_USER + JIRA_API_TOKEN, gh auth.
 # A URL whose title cannot be read stops the run.

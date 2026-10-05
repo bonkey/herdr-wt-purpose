@@ -39,7 +39,7 @@ $(run_entries)
 EOF_RUN
 if [ ${#names[@]} -eq 0 ]; then
   names=(claude codex shell)
-  cmds=("claude --dangerously-skip-permissions --name {{label}}" "codex --yolo" "")
+  cmds=("claude --allow-dangerously-skip-permissions --permission-mode plan --name {{label}}" "codex --yolo" "")
 fi
 menu=""; i=1
 for n in "${names[@]}"; do menu="$menu  [$i] $n"; i=$((i + 1)); done

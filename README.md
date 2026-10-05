@@ -48,7 +48,8 @@ Both actions are also in the workspace right-click menu:
 
 1. A small popup asks for one line. Esc, or Enter on an empty line, cancels. A second line asks
    what to start in the new workspace, by number (Esc cancels there too). Default menu: `[1] claude [2] codex [3] shell`
-   (`claude --dangerously-skip-permissions --name <label>`, `codex --yolo`, plain shell); the
+   (`claude --allow-dangerously-skip-permissions --permission-mode plan --name <label>`, which
+   starts in plan mode and keeps bypass in the Shift+Tab cycle; `codex --yolo`; plain shell); the
    `[run]` table in the config replaces it entirely, arguments included (Enter = first entry).
    A workspace that is not a git checkout gets a toast instead of the popup. Only a chosen
    command gets the removal offer below; the plain shell entry leaves you in the worktree.
@@ -99,7 +100,7 @@ Both actions are also in the workspace right-click menu:
     # {{branch}}, {{label}} (branch without prefix) and {{path}} expand. Keep the keys above
     # this table: TOML puts every later line inside [run].
     [run]
-    claude = "claude --dangerously-skip-permissions --name {{label}}"
+    claude = "claude --allow-dangerously-skip-permissions --permission-mode plan --name {{label}}"
     codex = "codex --yolo"
     shell = ""
 
