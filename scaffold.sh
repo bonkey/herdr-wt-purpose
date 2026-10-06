@@ -187,7 +187,6 @@ run_in_workspace() {
     sleep 0.2
   done
   "$herdr" pane run "$pane" "$cmd" >/dev/null 2>>"$log" || say "could not start: $cmd"
-  ran=" → $cmd"
 }
 
 # --- main -------------------------------------------------------------------------------------
@@ -236,7 +235,7 @@ fi
 label=${branch#"$prefix"}
 [ -n "$branch" ] && printf '\033[1m%s\033[0m\n' "$branch"
 
-target_pane=""; target_ws=""; wtpath=""; ran=""
+target_pane=""; target_ws=""; wtpath=""
 base_ref=""; [ "$base_mode" = current ] && base_ref="@"
 if command -v wt >/dev/null; then
   if [ -n "$pr_url" ]; then
@@ -296,5 +295,5 @@ else
 fi
 
 run_in_workspace
-"$herdr" notification show "Worktree ready" --body "${branch}${ran}" --sound done >/dev/null 2>&1
+"$herdr" notification show "Worktree ready" --body "$branch" --sound done >/dev/null 2>&1
 say "done"
