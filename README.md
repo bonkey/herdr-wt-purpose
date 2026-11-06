@@ -47,10 +47,10 @@ Both actions are also in the workspace right-click menu:
 ## Behavior
 
 1. A small popup asks for one line. Esc, or Enter on an empty line, cancels. A second line asks
-   what to start in the new workspace, by number (Esc cancels there too). Default menu: `[1] claude [2] codex [3] shell`
+   what to start in the new workspace, by number (Esc cancels there too). Default menu: `[1] claude [2] codex [3] opencode [4] shell`
    (`claude --allow-dangerously-skip-permissions --permission-mode plan --name <label>`, which
-   starts in plan mode and keeps bypass in the Shift+Tab cycle; `codex --yolo`; plain shell); the
-   `[run]` table in the config replaces it entirely, arguments included (Enter = first entry).
+   starts in plan mode and keeps bypass in the Shift+Tab cycle; `codex --yolo`; `opencode --auto`; plain
+   shell); the `[run]` table in the config replaces it entirely, arguments included (Enter = first entry).
    A workspace that is not a git checkout gets a toast instead of the popup. Only a chosen
    command gets the removal offer below; the plain shell entry leaves you in the worktree.
 2. The popup closes at once; the work continues in an unfocused split titled *creating
@@ -102,6 +102,7 @@ Both actions are also in the workspace right-click menu:
     [run]
     claude = "claude --allow-dangerously-skip-permissions --permission-mode plan --name {{label}}"
     codex = "codex --yolo"
+    opencode = "opencode --auto"
     shell = ""
 
 ## Development
