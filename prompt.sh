@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # prompt.sh — the popup. Line 1: a purpose, or a single ticket URL. Line 2: which command to start
 # in the new workspace, picked by number from the [run] table of the plugin config (defaults
-# below: claude / codex / opencode / shell, arguments included). Then the work moves to scaffold.sh in a visible, unfocused
+# below: claude / codex / opencode / vibe / shell, arguments included). Then the work moves to scaffold.sh in a visible, unfocused
 # split below the pane the action came from (a tab when no pane is known) and the popup closes.
 set -u
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
@@ -38,8 +38,8 @@ while IFS=$'\t' read -r n c; do [ -n "$n" ] && { names+=("$n"); cmds+=("$c"); };
 $(run_entries)
 EOF_RUN
 if [ ${#names[@]} -eq 0 ]; then
-  names=(claude codex opencode shell)
-  cmds=("claude --allow-dangerously-skip-permissions --permission-mode plan --name {{label}}" "codex --yolo" "opencode --auto" "")
+  names=(claude codex opencode vibe shell)
+  cmds=("claude --allow-dangerously-skip-permissions --permission-mode plan --name {{label}}" "codex --yolo" "opencode --auto" "vibe --auto-approve" "")
 fi
 menu=""; i=1
 for n in "${names[@]}"; do menu="$menu  [$i] $n"; i=$((i + 1)); done
