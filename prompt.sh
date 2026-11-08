@@ -39,7 +39,7 @@ $(run_entries)
 EOF_RUN
 if [ ${#names[@]} -eq 0 ]; then
   names=(claude codex opencode vibe shell)
-  cmds=("claude --allow-dangerously-skip-permissions --permission-mode plan --name {{label}}" "codex --yolo" "opencode --auto" "vibe --auto-approve" "")
+  cmds=("claude --allow-dangerously-skip-permissions --permission-mode plan --name {{label}}" "codex --yolo" "opencode --auto" "vibe --yolo --trust" "")
 fi
 menu=""; i=1
 for n in "${names[@]}"; do menu="$menu  [$i] $n"; i=$((i + 1)); done
