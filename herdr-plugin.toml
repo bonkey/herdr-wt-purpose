@@ -24,6 +24,13 @@ description = "Same, branching off the branch checked out in this workspace."
 contexts = ["workspace"]
 command = ["bash", "open.sh", "current"]
 
+[[actions]]
+id = "create-direct"
+title = "Worktree from purpose (default branch, no plan mode)"
+description = "Same as the default-branch action, but claude starts without plan mode."
+contexts = ["workspace"]
+command = ["bash", "open.sh", "default", "direct"]
+
 # Panes get the repo as cwd, so their scripts are addressed through the plugin root.
 [[panes]]
 id = "prompt"

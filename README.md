@@ -39,10 +39,21 @@ environment of the herdr server: a server started before they were set does not 
     command = "bonkey.wt-purpose.create"
     description = "Worktree from purpose / ticket URL"
 
-Both actions are also in the workspace right-click menu:
+To start claude without plan mode from a second key, bind `create-direct` too:
+
+    [[keys.command]]
+    key = "ctrl+alt+shift+h"
+    type = "plugin_action"
+    command = "bonkey.wt-purpose.create-direct"
+    description = "Worktree from purpose / ticket URL, no plan mode"
+
+All actions are also in the workspace right-click menu:
 
 - **Worktree from purpose (default branch)** — `create`
 - **Worktree from purpose (current branch)** — `create-current` (`wt switch --base @`)
+- **Worktree from purpose (default branch, no plan mode)** — `create-direct`: the same popup and
+  menu, but ` --permission-mode plan` (spelled exactly so, after another word) is dropped from the
+  chosen command, so claude starts in its default mode. Other entries run unchanged.
 
 ## Behavior
 

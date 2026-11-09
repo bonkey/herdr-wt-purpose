@@ -13,6 +13,7 @@ case $base in
   current) hint="from $(git branch --show-current 2>/dev/null || echo HEAD)" ;;
   *)       hint="from the default branch" ;;
 esac
+[ "${WTP_MODE:-}" = direct ] && hint="$hint, no plan mode"
 printf '\033[1mNew worktree\033[0m %s\n' "$hint"
 # Esc clears the line and submits it, so the empty-input exit below closes the popup. Esc Esc is
 # bound too, or it runs filename completion. After an Esc, readline waits keyseq-timeout ms for
@@ -49,6 +50,8 @@ IFS= read -r -n1 key; printf '\n'
 idx=0
 case $key in [1-9]) [ "$key" -le ${#names[@]} ] && idx=$((key - 1)) ;; esac
 run=${cmds[$idx]}
+# WTP_MODE=direct (the create-direct action) starts claude in its default permission mode.
+[ "${WTP_MODE:-}" = direct ] && run=${run/ --permission-mode plan/}
 
 if [ -z "${HERDR_WORKSPACE_ID:-}" ]; then
   printf '\033[31mno workspace to run the scaffold in\033[0m\n'; sleep 2; exit 1

@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# open.sh <default|current> — action entrypoint: open the prompt popup in the workspace's
+# open.sh <default|current> [direct] — action entrypoint: open the prompt popup in the workspace's
 # directory. Actions run with the plugin root as cwd, so the repo comes from the context JSON.
 # A popup gets no HERDR_WORKSPACE_ID of its own, so the caller's is forwarded with --env.
+# "direct" starts the chosen command without plan mode.
 set -u
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 herdr=${HERDR_BIN_PATH:-herdr}
 base=${1:-default}
+mode=${2:-}
 
 cwd=$(printf '%s' "${HERDR_PLUGIN_CONTEXT_JSON:-}" | jq -r '.workspace_cwd // .focused_pane_cwd // empty' 2>/dev/null)
 [ -n "$cwd" ] || cwd=${HERDR_ACTIVE_PANE_CWD:-$PWD}
@@ -24,4 +26,5 @@ set -- plugin pane open --plugin "${HERDR_PLUGIN_ID:-bonkey.wt-purpose}" --entry
   --placement popup --width 70% --height 6 --cwd "$cwd" --focus --env "WTP_BASE=$base"
 [ -n "${HERDR_WORKSPACE_ID:-}" ] && set -- "$@" --env "HERDR_WORKSPACE_ID=$HERDR_WORKSPACE_ID"
 [ -n "$target" ] && set -- "$@" --env "WTP_TARGET_PANE=$target"
+[ -n "$mode" ] && set -- "$@" --env "WTP_MODE=$mode"
 exec "$herdr" "$@"
